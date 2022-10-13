@@ -1,4 +1,4 @@
-# app/main.py
+# app.py
 
 from math import floor
 from flask import Flask, request
