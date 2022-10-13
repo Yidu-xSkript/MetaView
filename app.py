@@ -1,10 +1,18 @@
 # app.py
 
 from math import floor
+from winsound import MessageBeep, PlaySound
 from flask import Flask, request
 import MetaTrader5 as mt5
+from flask_ngrok import run_with_ngrok
+from playsound import playsound
 
 app = Flask(__name__)
+run_with_ngrok(app)
+
+@app.route("/")
+def home():
+    return "Hi"
 
 @app.route('/webhook/order/open', methods=['POST'])
 def openTradeWebhook():
@@ -66,6 +74,11 @@ def order(symbol, orderAction, orderType, entry_price, tp, sl):
         request['deviation'] = 20
 
     result = mt5.order_send(request)
+    if result.retcode != mt5.TRADE_RETCODE_DONE: 
+        print("4. order_send failed, retcode={}".format(result.retcode))
+        PlaySound("400.wav", False)
+    else:
+        PlaySound("200.wav", False)
     return result
 
 def calculateLots(symbol, sl):
@@ -154,3 +167,6 @@ def deleteOrder(ticket):
 
     result = mt5.order_send(request)
     result
+
+if __name__ == "__main__":
+    app.run(port=5000)
