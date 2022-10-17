@@ -13,7 +13,7 @@ def openTradeWebhook():
     if request.method == 'POST':
         if login():
             if request.json['orderMode'] == "Open":
-                order(request.json['symbol'], request.json['orderAction'], request.json['orderType'], float(request.json['entry_price']), float(request.json['tp']), float(request.json['sl']))
+                order(request.json['symbol'], request.json['orderAction'], request.json['orderType'], float(request.json['entry_price']), float(request.json['tp']), float(request.json['sl']), request.json['comment'])
             elif request.json['orderMode'] == "Close":
                 closeOrder(request.json['symbol'])
             elif request.json['orderMode'] == "Modify":

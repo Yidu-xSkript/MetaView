@@ -6,8 +6,8 @@ import MetaTrader5 as mt5
 
 
 def login():
-    username = 1051316876
-    password = "X8LMASWEA1"
+    username = 1051332401
+    password = "X32CMQ5SPH"
     server = "FTMO-Demo"
     
     if not mt5.initialize():
@@ -21,7 +21,7 @@ def login():
 def shutdown():
     mt5.shutdown()
 
-def order(symbol, orderAction, orderType, entry_price, tp, sl):
+def order(symbol, orderAction, orderType, entry_price, tp, sl, comment):
     mt5.initialize()
     # Add the option to account for spread.
     info = mt5.symbol_info(symbol)
@@ -38,11 +38,11 @@ def order(symbol, orderAction, orderType, entry_price, tp, sl):
         "symbol": symbol,
         "volume": float(lots),
         "type": mt5.ORDER_TYPE_BUY if orderType == "buy" else mt5.ORDER_TYPE_SELL if orderType == "sell" else mt5.ORDER_TYPE_BUY_LIMIT if orderType == "buy_limit" else mt5.ORDER_TYPE_SELL_LIMIT if orderType == "sell_limit" else mt5.ORDER_TYPE_BUY_STOP if orderType == "buy_stop" else mt5.ORDER_TYPE_SELL_STOP,
-        "price": tick_info.ask if orderAction == "market_order" and orderType == "buy" else tick_info.bid if orderAction == "market_order" and orderType == "sell" else entry_price + spread if orderAction == "pending_order" and orderType == "buy_stop" or orderAction == "pending_order" and orderType == "buy_limit" else entry_price,
+        "price": tick_info.ask if orderAction == "market_order" and orderType == "buy" else tick_info.bid if orderAction == "market_order" and orderType == "sell" else entry_price if orderAction == "pending_order" and orderType == "buy_stop" or orderAction == "pending_order" and orderType == "buy_limit" else entry_price,
         "sl": sl_spread if orderType == "sell" or orderType == "sell_stop" or orderType == "sell_limit" else sl,
         "tp": tp,
         "magic": 2033,
-        "comment": "MetaView > Open Order",
+        "comment": comment,
         "type_time": mt5.ORDER_TIME_GTC,
         "type_filling": mt5.ORDER_FILLING_IOC
     }
@@ -55,7 +55,7 @@ def order(symbol, orderAction, orderType, entry_price, tp, sl):
         print("4. order_send failed, retcode={}".format(result.retcode))
         PlaySound("400.wav", False)
         if result.retcode == mt5.TRADE_RETCODE_INVALID_PRICE and orderAction == "pending_order":
-            order(symbol, orderAction, "buy_limit" if orderType == "buy_stop" else "sell_limit" if orderType == "sell_stop" else "buy_stop" if orderType == "buy_limit" else "sell_stop", entry_price, tp, sl)
+            order(symbol, orderAction, "buy_limit" if orderType == "buy_stop" else "sell_limit" if orderType == "sell_stop" else "buy_stop" if orderType == "buy_limit" else "sell_stop", entry_price, tp, sl, comment)
     else:
         PlaySound("200.wav", False)
     return result
@@ -108,7 +108,7 @@ def closeOrder(symbol):
     # mt5.initialize()
     positions = mt5.positions_get(symbol=symbol)
 
-    if positions is None:
+    if len(positions) == 0:
         print("No Open positions on {}, error code = {}".format(symbol, mt5.last_error))
         return
 
