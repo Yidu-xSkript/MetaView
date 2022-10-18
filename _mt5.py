@@ -21,14 +21,14 @@ def login():
 def shutdown():
     mt5.shutdown()
 
-def order(symbol, orderAction, orderType, entry_price, tp, sl, comment):
+def order(symbol, orderAction, orderType, entry_price, tp, sl, comment, maxrisk):
     mt5.initialize()
     # Add the option to account for spread.
     info = mt5.symbol_info(symbol)
     tick_info = mt5.symbol_info_tick(symbol)
 
     stopInPips = abs(round(entry_price - sl, info.digits)/info.point)/10
-    lots = calculateLots(symbol, stopInPips)
+    lots = calculateLots(symbol, stopInPips, maxrisk)
     spread = info.ask - info.bid
     
     sl_spread = sl + spread
@@ -55,14 +55,14 @@ def order(symbol, orderAction, orderType, entry_price, tp, sl, comment):
         print("4. order_send failed, retcode={}".format(result.retcode))
         PlaySound("400.wav", False)
         if result.retcode == mt5.TRADE_RETCODE_INVALID_PRICE and orderAction == "pending_order":
-            order(symbol, orderAction, "buy_limit" if orderType == "buy_stop" else "sell_limit" if orderType == "sell_stop" else "buy_stop" if orderType == "buy_limit" else "sell_stop", entry_price, tp, sl, comment)
+            order(symbol, orderAction, "buy_limit" if orderType == "buy_stop" else "sell_limit" if orderType == "sell_stop" else "buy_stop" if orderType == "buy_limit" else "sell_stop", entry_price, tp, sl, comment, maxrisk)
     else:
         PlaySound("200.wav", False)
     return result
 
-def calculateLots(symbol, sl):
+def calculateLots(symbol, sl, maxrisk):
     lots = 0.25
-    riskPerTrade = riskTierModel()
+    riskPerTrade = riskTierModel(maxrisk)
     info = mt5.symbol_info(symbol)
     lotstep = info.volume_step
 
@@ -88,19 +88,66 @@ def pointVal(symbol):
 
     return tickValue / ticksPerPt
 
-def riskTierModel():
+def riskTierModel(maxrisk):
     equity = mt5.account_info().balance
-    riskPerTrade = 0
+    riskPerTrade = 1
+    
+    riskTier_3 = (equity < 138000 and equity >= 122000)
+    riskTier_2 = (equity < 122000 and equity >= 112000)
+    riskTier_1 = (equity <= 100000 and equity >= 99000) or (equity > 100000 and equity < 112000)
+    riskTier_0_5 = (equity < 99000 and equity > 92000)
+    riskTier_0_25 = (equity <= 92000)
     
     # You're gonna have to fix this if your balance is different than 100k.
-    if equity >= 112000:
-       riskPerTrade = 2
-    if (equity <= 100000 and equity >= 99000) or (equity > 100000 and equity < 112000):
-       riskPerTrade = 1
-    if(equity < 99000 and equity > 92000):
-       riskPerTrade = 0.5
-    if(equity <= 92000):
-       riskPerTrade = 0.25    
+    if maxrisk == 4:
+        if equity >= 138000:
+            riskPerTrade = 4
+        if riskTier_3:
+            riskPerTrade = 3
+        if riskTier_2:
+            riskPerTrade = 2
+        if riskTier_1:
+            riskPerTrade = 1
+        if riskTier_0_5:
+            riskPerTrade = 0.5
+        if riskTier_0_25:
+            riskPerTrade = 0.25
+
+    if maxrisk == 3:
+        if equity >= 122000:
+            riskPerTrade = 3
+        if riskTier_2:
+            riskPerTrade = 2
+        if riskTier_1:
+            riskPerTrade = 1
+        if riskTier_0_5:
+            riskPerTrade = 0.5
+        if riskTier_0_25:
+            riskPerTrade = 0.25
+
+    if maxrisk == 2:
+        if equity >= 112000:
+            riskPerTrade = 2
+        if riskTier_1:
+            riskPerTrade = 1
+        if riskTier_0_5:
+            riskPerTrade = 0.5
+        if riskTier_0_25:
+            riskPerTrade = 0.25
+
+    if maxrisk == 1:
+        if (equity >= 99000):
+            riskPerTrade = 1
+        if riskTier_0_5:
+            riskPerTrade = 0.5
+        if riskTier_0_25:
+            riskPerTrade = 0.25
+
+    if maxrisk == 0.5:
+        if (equity > 92000):
+            riskPerTrade = 0.5
+        if riskTier_0_25:
+            riskPerTrade = 0.25
    
     return riskPerTrade
 
