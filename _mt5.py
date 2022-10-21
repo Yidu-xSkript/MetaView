@@ -26,9 +26,10 @@ def order(symbol, orderAction, orderType, entry_price, tp, sl, comment, maxrisk)
     # Add the option to account for spread.
     info = mt5.symbol_info(symbol)
     tick_info = mt5.symbol_info_tick(symbol)
+    entryForStop = entry_price if orderAction == "pending_order" else tick_info.ask if orderAction == "market_order" and orderType == "buy" else tick_info.bid
 
-    stopInPips = abs(round(entry_price - sl, info.digits)/info.point)/10
-    lots = calculateLots(symbol, stopInPips, maxrisk)
+    stopInPips = abs(round(entryForStop - sl, info.digits)/info.point)/10
+    lots = calculateLots(symbol, sl=stopInPips, maxrisk=maxrisk)
     spread = info.ask - info.bid
     
     sl_spread = sl + spread
@@ -48,7 +49,7 @@ def order(symbol, orderAction, orderType, entry_price, tp, sl, comment, maxrisk)
     }
 
     if orderAction == "market_order":
-        request['deviation'] = 20
+        request['deviation'] = 8
 
     result = mt5.order_send(request)
     if result.retcode != mt5.TRADE_RETCODE_DONE: 
