@@ -15,7 +15,7 @@ Use TradingView's Alert Hook feature to execute, modify, close, and delete order
 
 You can modify the code however you see fit. 
 
-I Use NGROK to generate links in order to execute my trades for now. but you can just buy a vpn server and use it.
+I Use NGROK to generate links in order to execute my trades for now. but you can just buy a windows vpn server and use it. (they don't have the metatrader5 library in linux yet)
 The way you use it on TradingView will be by adding a similar type of alert in your pinescript strategies.
 
 So MetaView calculates Risk and sets volume based on a model called "The Risk Tier Model". It basically is a way to set risk based on balance and your current profit. example: if you have $100,000 balance and you made 12% on that a/c then it'll automatically increase your risk from 1% to 2%. you're gonna have to modify this the way you like. it calculates based on the 100k a/c balance. you're gonna have to change certain things in the code. specifically you'll be modifying the __mt5.py - ```riskTierModel(maxrisk)``` method which starts form line 92.
